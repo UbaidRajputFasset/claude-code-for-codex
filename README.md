@@ -42,6 +42,16 @@ codex plugin add claude-code@claude-code-for-codex
 
 Start a new Codex task after installation so the skill is loaded.
 
+To upgrade an existing installation after a new release:
+
+```sh
+codex plugin marketplace upgrade claude-code-for-codex
+codex plugin remove claude-code@claude-code-for-codex
+codex plugin add claude-code@claude-code-for-codex
+```
+
+Start a new Codex task after upgrading.
+
 ## Use
 
 Ask naturally or invoke `$claude-code` explicitly:

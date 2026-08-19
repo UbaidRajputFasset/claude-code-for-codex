@@ -106,6 +106,29 @@ exit 64
   });
 });
 
+test("doctor accepts interactive Claude sessions when checking background support", async () => {
+  const bin = await createFakeClaude(`
+if [ "$1" = "--version" ]; then
+  printf '%s\\n' '2.1.220 (Claude Code)'
+  exit 0
+fi
+if [ "$1" = "auth" ] && [ "$2" = "status" ]; then
+  printf '%s\\n' '{"loggedIn":true,"authMethod":"claude.ai","apiProvider":"firstParty"}'
+  exit 0
+fi
+if [ "$1" = "agents" ] && [ "$2" = "--json" ] && [ "$3" = "--all" ] && [ "$4" = "--cwd" ]; then
+  printf '%s\\n' '[{"pid":10233,"cwd":"/project","kind":"interactive","startedAt":1787154158100,"sessionId":"d334aa90-8664-4202-90a5-1266557d9c6f","name":"project-f0"}]'
+  exit 0
+fi
+exit 64
+`);
+
+  const result = invoke(["doctor"], bin);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).backgroundJobs, true);
+});
+
 test("login starts Claude's subscription authentication flow", async () => {
   const bin = await createFakeClaude(`
 if [ "$1" = "auth" ] && [ "$2" = "login" ] && [ "$3" = "--claudeai" ]; then
@@ -171,7 +194,7 @@ if [ "$1" = "--bg" ] && [ "$2" = "--name" ] && [ "$4" = "--permission-mode" ] &&
 fi
 if [ "$1" = "agents" ] && [ "$2" = "--json" ] && [ "$3" = "--all" ] && [ "$4" = "--cwd" ]; then
   job_name=$(cat "$FAKE_STATE_FILE")
-  printf '[{"id":"7c5dcf5d","sessionId":"7c5dcf5d-1111-2222-3333-444444444444","name":"%s","state":"done","cwd":"%s","kind":"background","startedAt":"2026-08-19T00:00:00.000Z"}]\\n' "$job_name" "$5"
+  printf '[{"id":"7c5dcf5d","sessionId":"7c5dcf5d-1111-2222-3333-444444444444","name":"%s","state":"done","cwd":"%s","kind":"background","startedAt":1787154158100}]\\n' "$job_name" "$5"
   exit 0
 fi
 if [ "$1" = "logs" ] && [ "$2" = "7c5dcf5d" ]; then
@@ -209,7 +232,7 @@ if [ "$1" = "stop" ] && [ "$2" = "7c5dcf5d" ]; then
 fi
 if [ "$1" = "agents" ] && [ "$2" = "--json" ] && [ "$3" = "--all" ] && [ "$4" = "--cwd" ]; then
   state=$(cat "$FAKE_STATE_FILE")
-  printf '[{"id":"7c5dcf5d","sessionId":"7c5dcf5d-1111-2222-3333-444444444444","name":"codex-job","state":"%s","cwd":"%s","kind":"background","startedAt":"2026-08-19T00:00:00.000Z"}]\\n' "$state" "$5"
+  printf '[{"id":"7c5dcf5d","sessionId":"7c5dcf5d-1111-2222-3333-444444444444","name":"codex-job","state":"%s","cwd":"%s","kind":"background","startedAt":1787154158100}]\\n' "$state" "$5"
   exit 0
 fi
 exit 64
@@ -237,7 +260,7 @@ if [ "$1" = "--bg" ] && [ "$2" = "--name" ] && [ "$4" = "--permission-mode" ] &&
 fi
 if [ "$1" = "agents" ] && [ "$2" = "--json" ] && [ "$3" = "--all" ] && [ "$4" = "--cwd" ]; then
   job_name=$(cat "$FAKE_STATE_FILE")
-  printf '[{"id":"writejob","sessionId":"write-session","name":"%s","state":"working","cwd":"%s","kind":"background","startedAt":"2026-08-19T00:00:00.000Z"}]\\n' "$job_name" "$5"
+  printf '[{"id":"writejob","sessionId":"write-session","name":"%s","state":"working","cwd":"%s","kind":"background","startedAt":1787154158100}]\\n' "$job_name" "$5"
   exit 0
 fi
 exit 64
@@ -254,7 +277,7 @@ exit 64
 test("resume continues a background job's Claude session in write mode", async () => {
   const bin = await createFakeClaude(`
 if [ "$1" = "agents" ] && [ "$2" = "--json" ] && [ "$3" = "--all" ] && [ "$4" = "--cwd" ]; then
-  printf '%s\\n' '[{"id":"7c5dcf5d","sessionId":"7c5dcf5d-1111-2222-3333-444444444444","name":"codex-job","state":"stopped","cwd":"project","kind":"background","startedAt":"2026-08-19T00:00:00.000Z"}]'
+  printf '%s\\n' '[{"id":"7c5dcf5d","sessionId":"7c5dcf5d-1111-2222-3333-444444444444","name":"codex-job","state":"stopped","cwd":"project","kind":"background","startedAt":1787154158100}]'
   exit 0
 fi
 if [ "$1" = "--resume" ] && [ "$2" = "7c5dcf5d-1111-2222-3333-444444444444" ] && [ "$3" = "-p" ] && [ "$4" = "--output-format" ] && [ "$5" = "json" ] && [ "$6" = "--permission-mode" ] && [ "$7" = "acceptEdits" ] && [ "$8" = "Finish the fix" ]; then

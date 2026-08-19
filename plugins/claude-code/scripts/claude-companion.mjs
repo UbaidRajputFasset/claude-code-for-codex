@@ -47,7 +47,7 @@ function doctor() {
     }
     const backgroundJobs = background.status === 0;
     if (backgroundJobs) {
-        readAgents(background.stdout);
+        readSessions(background.stdout);
     }
     return {
         installed: true,
@@ -89,31 +89,39 @@ function delegate(prompt) {
     }
     process.stdout.write(result.stdout);
 }
-function readAgent(value) {
+function readSession(value) {
     if (typeof value !== "object" ||
         value === null ||
         !("cwd" in value) ||
         typeof value.cwd !== "string" ||
-        !("id" in value) ||
-        typeof value.id !== "string" ||
         !("kind" in value) ||
-        typeof value.kind !== "string" ||
+        (value.kind !== "interactive" && value.kind !== "background") ||
         !("startedAt" in value) ||
-        typeof value.startedAt !== "string" ||
-        !("state" in value) ||
-        !["working", "blocked", "done", "failed", "stopped"].includes(String(value.state)) ||
+        typeof value.startedAt !== "number" ||
         ("name" in value && typeof value.name !== "string") ||
         ("sessionId" in value && typeof value.sessionId !== "string")) {
-        throw new Error("Claude returned an invalid background agent");
+        throw new Error("Claude returned an invalid agent session");
+    }
+    if (value.kind === "background") {
+        if (!("id" in value) ||
+            typeof value.id !== "string" ||
+            !("state" in value) ||
+            !["working", "blocked", "done", "failed", "stopped"].includes(String(value.state))) {
+            throw new Error("Claude returned an invalid background agent");
+        }
+        return value;
     }
     return value;
 }
-function readAgents(output) {
+function readSessions(output) {
     const value = JSON.parse(output);
     if (!Array.isArray(value)) {
-        throw new Error("Claude returned an invalid background agent list");
+        throw new Error("Claude returned an invalid agent session list");
     }
-    return value.map(readAgent);
+    return value.map(readSession);
+}
+function readAgents(output) {
+    return readSessions(output).filter((session) => session.kind === "background");
 }
 function agents() {
     const result = spawnSync("claude", ["agents", "--json", "--all", "--cwd", process.cwd()], { encoding: "utf8" });

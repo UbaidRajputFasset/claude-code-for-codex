@@ -11,13 +11,17 @@ type ClaudeAuthStatus = {
 
 type BackgroundState = "working" | "blocked" | "done" | "failed" | "stopped";
 
-type ClaudeAgent = {
+type ClaudeSession = {
   cwd: string;
-  id: string;
-  kind: string;
+  kind: "interactive" | "background";
   name?: string;
   sessionId?: string;
-  startedAt: string;
+  startedAt: number;
+};
+
+type ClaudeAgent = ClaudeSession & {
+  id: string;
+  kind: "background";
   state: BackgroundState;
 };
 
@@ -95,7 +99,7 @@ function doctor(): DoctorResult {
   }
   const backgroundJobs = background.status === 0;
   if (backgroundJobs) {
-    readAgents(background.stdout);
+    readSessions(background.stdout);
   }
   return {
     installed: true,
@@ -149,34 +153,45 @@ function delegate(prompt: string): void {
   process.stdout.write(result.stdout);
 }
 
-function readAgent(value: unknown): ClaudeAgent {
+function readSession(value: unknown): ClaudeSession | ClaudeAgent {
   if (
     typeof value !== "object" ||
     value === null ||
     !("cwd" in value) ||
     typeof value.cwd !== "string" ||
-    !("id" in value) ||
-    typeof value.id !== "string" ||
     !("kind" in value) ||
-    typeof value.kind !== "string" ||
+    (value.kind !== "interactive" && value.kind !== "background") ||
     !("startedAt" in value) ||
-    typeof value.startedAt !== "string" ||
-    !("state" in value) ||
-    !["working", "blocked", "done", "failed", "stopped"].includes(String(value.state)) ||
+    typeof value.startedAt !== "number" ||
     ("name" in value && typeof value.name !== "string") ||
     ("sessionId" in value && typeof value.sessionId !== "string")
   ) {
-    throw new Error("Claude returned an invalid background agent");
+    throw new Error("Claude returned an invalid agent session");
   }
-  return value as ClaudeAgent;
+  if (value.kind === "background") {
+    if (
+      !("id" in value) ||
+      typeof value.id !== "string" ||
+      !("state" in value) ||
+      !["working", "blocked", "done", "failed", "stopped"].includes(String(value.state))
+    ) {
+      throw new Error("Claude returned an invalid background agent");
+    }
+    return value as ClaudeAgent;
+  }
+  return value as ClaudeSession;
+}
+
+function readSessions(output: string): Array<ClaudeSession | ClaudeAgent> {
+  const value: unknown = JSON.parse(output);
+  if (!Array.isArray(value)) {
+    throw new Error("Claude returned an invalid agent session list");
+  }
+  return value.map(readSession);
 }
 
 function readAgents(output: string): ClaudeAgent[] {
-  const value: unknown = JSON.parse(output);
-  if (!Array.isArray(value)) {
-    throw new Error("Claude returned an invalid background agent list");
-  }
-  return value.map(readAgent);
+  return readSessions(output).filter((session): session is ClaudeAgent => session.kind === "background");
 }
 
 function agents(): ClaudeAgent[] {
