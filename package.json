@@ -1,0 +1,19 @@
+{
+  "name": "claude-code-for-codex",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Codex plugin for using Claude Code as a companion agent.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "test": "npm run build && node --test tests/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "claude-code",
+  "version": "0.1.0",
+  "description": "Use Claude Code from Codex for reviews, delegation, background jobs, and resumable sessions.",
+  "author": {
+    "name": "UbaidRajputFasset",
+    "url": "https://github.com/UbaidRajputFasset"
+  },
+  "homepage": "https://github.com/UbaidRajputFasset/claude-code-for-codex#readme",
+  "repository": "https://github.com/UbaidRajputFasset/claude-code-for-codex",
+  "license": "MIT",
+  "keywords": [
+    "anthropic",
+    "claude",
+    "claude-code",
+    "codex",
+    "delegation"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Claude Code",
+    "shortDescription": "Use Claude Code from Codex.",
+    "longDescription": "Ask Claude for a second opinion, delegate code changes, run background jobs, inspect results, cancel work, and resume saved sessions from Codex.",
+    "developerName": "UbaidRajputFasset",
+    "category": "Productivity",
+    "capabilities": [
+      "Consultation",
+      "Code delegation",
+      "Background jobs",
+      "Resumable sessions"
+    ],
+    "websiteURL": "https://github.com/UbaidRajputFasset/claude-code-for-codex",
+    "defaultPrompt": [
+      "Ask Claude to review the current change.",
+      "Delegate this implementation to Claude.",
+      "Run Claude in the background on this task."
+    ]
+  }
+}
